@@ -40,6 +40,7 @@ def main():
         print(compare(sudoku))
     print('Final')
     print(sudoku)
+
     print(check_sudoku(sudoku))
 
 
