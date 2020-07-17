@@ -7,7 +7,6 @@ class SudokuField:
         self.generator = gen
         self.correct_field = self.generator.generate_correct()
         self.field = self.generator.generate()
-        self.is_complete = False
         self.available_numbers = set()
 
         for i in range(len(self.field)):
@@ -22,8 +21,7 @@ class SudokuField:
             for j in range(0, len(self.field[i]), 3):
                 self.squares.append(Square(i,
                                            j,
-                                           self.field,
-                                           self.field[i][j].get_square()))
+                                           self.field))
         self.rows = []
         for i in range(len(self.field)):
             self.rows.append(Row(i, self.field))
@@ -32,21 +30,18 @@ class SudokuField:
         for i in range(len(self.field)):
             self.columns.append(Column(i, self.field))
 
-        self.update_numbers()
+        self.update_all()
 
-    def update_numbers(self):
-        for sq in self.squares:
-            result = sq.update_numbers()
+    def update_container(self, list_of_containers):
+        for cont in list_of_containers:
+            result = cont.update_numbers()
             if result:
-                self.update_numbers()
-        for row in self.rows:
-            result = row.update_numbers()
-            if result:
-                self.update_numbers()
-        for column in self.columns:
-            result = column.update_numbers()
-            if result:
-                self.update_numbers()
+                self.update_all()
+
+    def update_all(self):
+        self.update_container(self.squares)
+        self.update_container(self.rows)
+        self.update_container(self.columns)
 
     def get_positions_of_num(self, num):
         positions = []
@@ -63,17 +58,6 @@ class SudokuField:
                 squares.append(sq)
         return squares
 
-    def set_num(self, num, pos):
-        self.field[pos[0]][pos[1]] = Cell(num, (pos[0], pos[1]))
-        counter = 0
-        for row in self.field:
-            for elem in row:
-                if elem == num:
-                    counter += 1
-        if counter == 9:
-            self.available_numbers.remove(num)
-            self.is_complete = not self.available_numbers
-
     def get_rows_without_number(self, number):
         rows = []
         for r in self.rows:
@@ -88,7 +72,7 @@ class SudokuField:
                 columns.append(c)
         return columns
 
-    def __str__(self):
+    def __repr__(self):
         strs = []
         for row in self.field:
             strs.append(' . '.join([r.value for r in row]))

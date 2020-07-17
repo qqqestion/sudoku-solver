@@ -5,12 +5,6 @@ from utils import check_sudoku, compare
 
 def main():
     sudoku = SudokuField(HardFieldGenerator())
-    print('Sudoku', sudoku, sep='\n')
-    # print('Field', sudoku.field, sep='\n')
-    # print('Squares', sudoku.squares, sep='\n')
-    # print('Rows', sudoku.rows, sep='\n')
-    # print('Column', sudoku.columns, sep='\n')
-    # return
     while not check_sudoku(sudoku):
         for num in sudoku.available_numbers:
             positions = sudoku.get_positions_of_num(num)
@@ -19,19 +13,19 @@ def main():
             for s in squares:
                 changed = s.predict(num, positions)
                 if changed:
-                    sudoku.update_numbers()
+                    sudoku.update_all()
 
             rows = sudoku.get_rows_without_number(num)
             for r in rows:
                 changed = r.predict(num, positions)
                 if changed:
-                    sudoku.update_numbers()
+                    sudoku.update_all()
 
             columns = sudoku.get_columns_without_number(num)
             for c in columns:
                 changed = c.predict(num, positions)
                 if changed:
-                    sudoku.update_numbers()
+                    sudoku.update_all()
             a = 10
             print(a)
 
@@ -40,8 +34,17 @@ def main():
         print(compare(sudoku))
     print('Final')
     print(sudoku)
+    if check_sudoku(sudoku):
+        check_msg = "Sudoku is correct"
+    else:
+        check_msg = "Sorry, something went wrong. Sudoku is incorrect"
+    print(check_msg)
 
-    print(check_sudoku(sudoku))
+    if compare(sudoku):
+        compare_msg = "Comparing with correct version is successful"
+    else:
+        compare_msg = "During comparing with correct version we got some trouble"
+    print(compare_msg)
 
 
 if __name__ == '__main__':

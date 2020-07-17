@@ -34,11 +34,20 @@ class Cell:
         if self.is_occupied:
             self.available_numbers = []
     
-    def __eq__(self, obj):
-        if isinstance(obj, Cell):
-            return self.value == obj.value
+    def __eq__(self, other):
+        if isinstance(other, Cell):
+            return self.value == other.value
         else:
-            return self.value == obj
+            return self.value == other
+
+    def __cmp__(self, other):
+        return self.position == other.position and self.available_numbers == self.available_numbers
+
+    def __lt__(self, other):
+        if isinstance(other, Cell):
+            return self.value < other.value
+        else:
+            return self.value < other
 
     def __str__(self):
         return self.value
