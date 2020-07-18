@@ -10,56 +10,69 @@ class CellContainer(ABC):
     def has_number(self, num):
         return num in self.data
 
-    def set_available(self):
+    def remove_number(self, to_save, number):
+        for i in range(len(self.data)):
+            if i not in to_save:
+                self.data[i].remove_available(number)
+
+    def set_available(self, sudoku):
         number_counter = collections.defaultdict(lambda: [])
         changed = False
         for i in range(len(self.data)):
             for available in self.data[i].available_numbers:
                 number_counter[available].append(i)
 
-        # pairs = []
-        # for available_number, lcells in number_counter.items():
-        #     if len(lcells) == 1:
-        #         icell = lcells[0]
-        #         self.data[icell].set_value(available_number)
-        #         changed = True
-        #     elif len(lcells) == 2:
-        #         pairs.append(tuple([self.data[icell] for icell in lcells]))
-        #         pass
-        #     elif len(lcells) == 3:
-        #         pass
-        #
-        # for p1, p2 in pairs:
-        #     if p1.get_row() == p2.get_row():
-        #         pass
-        #     if p1.get_column() == p2.get_column():
-        #         pass
-        #
-        # for i in range(len(pairs)):
-        #     for j in range(i + 1, len(pairs)):
-        #         p1 = pairs[i]
-        #         p2 = pairs[j]
-        #         if p1[0].available_numbers == p2[0].available_numbers and \
-        #                 p1[1].available_numbers == p2[1].available_numbers:
-        #             s1 = set(p1[0].available_numbers)
-        #             s2 = set(p1[1].available_numbers)
-        #             excess_elements = s1.difference(s2)
-        #             for elem in excess_elements:
-        #                 p1[0].remove_available(elem)
-        #                 p1[1].remove_available(elem)
-        #             changed = True
+        pairs = []
+        for available_number, lcells in number_counter.items():
+            if len(lcells) == 1:
+                icell = lcells[0]
+                self.data[icell].set_value(available_number)
+                changed = True
+            elif len(lcells) == 2:
+                p1, p2 = tuple([self.data[icell] for icell in lcells])
+                pairs.append((p1, p2))
+
+                if p1.get_row() == p2.get_row():
+                    row = sudoku.get_row(p1.get_row())
+                    row.remove_number([p1.get_column(), p2.get_column()],
+                                      available_number)
+                if p1.get_column() == p2.get_column():
+                    column = sudoku.get_column(p1.get_column())
+                    column.remove_number([p1.get_row(), p2.get_row()],
+                                         available_number)
+            elif len(lcells) == 3:
+                pass
+
+        for i in range(len(pairs)):
+            for j in range(i + 1, len(pairs)):
+                p1 = pairs[i]
+                p2 = pairs[j]
+                if p1[0].available_numbers == p2[0].available_numbers and \
+                        p1[1].available_numbers == p2[1].available_numbers:
+                    s1 = set(p1[0].available_numbers)
+                    s2 = set(p1[1].available_numbers)
+                    excess_elements = s1.difference(s2)
+                    for elem in excess_elements:
+                        p1[0].remove_available(elem)
+                        p1[1].remove_available(elem)
+                    changed = True
+
         return changed
 
-    def predict(self, num, positions):
+    def predict(self, num, positions: list, sudoku):
         changed = False
         for pos in positions:
             cell = self.get_element(pos)
             changed |= cell.remove_available(num)
+            if changed:
+                if cell.value == num:
+                    positions.append(cell.position)
+                sudoku.update_all()
+            # if changed and cell.value == num:
+            #     positions.append(cell.position)
 
-        changed |= self.set_available()
+        changed |= self.set_available(sudoku)
 
-        if changed:
-            self.update_numbers()
         return changed
 
     def update_numbers(self):
@@ -102,23 +115,31 @@ class Square(CellContainer):
                 self.data.append(data[i][j])
         self.update_numbers()
 
-    def predict(self, num, positions):
+    def predict(self, num, positions, sudoku):
         changed = False
         for pos in positions:
             if self.valid_row_position(pos):
                 row_with_that_number = [self.data[(pos[0] - self.ystart) * 3 + i] for i in range(self.size)]
                 for cell in row_with_that_number:
                     changed |= cell.remove_available(num)
+                    if changed:
+                        if cell.value == num:
+                            positions.append(cell.position)
+                        sudoku.update_all()
 
             if self.valid_column_position(pos):
                 column_with_that_number = [self.data[i * 3 + pos[1] - self.xstart] for i in range(self.size)]
                 for cell in column_with_that_number:
                     changed |= cell.remove_available(num)
+                    if changed:
+                        if cell.value == num:
+                            positions.append(cell.position)
+                    sudoku.update_all()
+                    # if changed and cell.value == num:
+                    #     positions.append(cell.position)
 
-        changed |= self.set_available()
+        changed |= self.set_available(sudoku)
 
-        if changed:
-            self.update_numbers()
         return changed
 
     def valid_row_position(self, pos):

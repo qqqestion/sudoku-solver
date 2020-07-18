@@ -36,12 +36,19 @@ class SudokuField:
         for cont in list_of_containers:
             result = cont.update_numbers()
             if result:
-                self.update_all()
+                return True
+        return False
 
     def update_all(self):
-        self.update_container(self.squares)
-        self.update_container(self.rows)
-        self.update_container(self.columns)
+        square_result = self.update_container(self.squares)
+        if square_result:
+            self.update_all()
+        row_result = self.update_container(self.rows)
+        if row_result:
+            self.update_all()
+        column_result = self.update_container(self.columns)
+        if column_result:
+            self.update_all()
 
     def get_positions_of_num(self, num):
         positions = []
@@ -71,6 +78,12 @@ class SudokuField:
             if not c.has_number(number):
                 columns.append(c)
         return columns
+
+    def get_row(self, irow):
+        return self.rows[irow]
+
+    def get_column(self, icolumn):
+        return self.columns[icolumn]
 
     def __repr__(self):
         strs = []
