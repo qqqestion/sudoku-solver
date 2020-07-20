@@ -5,7 +5,6 @@ from components import Square, Row, Column
 class SudokuField:
     def __init__(self, gen):
         self.generator = gen
-        self.correct_field = self.generator.generate_correct()
         self.field = self.generator.generate()
         self.available_numbers = set()
 
@@ -17,17 +16,13 @@ class SudokuField:
         self.available_numbers.remove(' ')
 
         self.squares = []
-        for i in range(0, len(self.field), 3):
-            for j in range(0, len(self.field[i]), 3):
-                self.squares.append(Square(i,
-                                           j,
-                                           self.field))
         self.rows = []
-        for i in range(len(self.field)):
-            self.rows.append(Row(i, self.field))
-
         self.columns = []
         for i in range(len(self.field)):
+            self.squares.append(Square(i // 3 * 3,
+                                       i % 3 * 3,
+                                       self.field))
+            self.rows.append(Row(i, self.field))
             self.columns.append(Column(i, self.field))
 
         self.update_all()
@@ -40,15 +35,10 @@ class SudokuField:
         return False
 
     def update_all(self):
-        square_result = self.update_container(self.squares)
-        if square_result:
-            self.update_all()
-        row_result = self.update_container(self.rows)
-        if row_result:
-            self.update_all()
-        column_result = self.update_container(self.columns)
-        if column_result:
-            self.update_all()
+        for list_of_containers in [self.squares, self.rows, self.columns]:
+            result = self.update_container(list_of_containers)
+            if result:
+                self.update_all()
 
     def get_positions_of_num(self, num):
         positions = []
@@ -58,26 +48,18 @@ class SudokuField:
                     positions.append((i, j))
         return positions
 
-    def get_squares_without_number(self, num):
-        squares = []
-        for sq in self.squares:
-            if not sq.has_number(num):
-                squares.append(sq)
-        return squares
+    def predict(self, list_of_containers, num, positions):
+        for s in list_of_containers:
+            changed = s.predict(num, positions, self)
+            if changed:
+                self.update_all()
 
-    def get_rows_without_number(self, number):
-        rows = []
-        for r in self.rows:
-            if not r.has_number(number):
-                rows.append(r)
-        return rows
-
-    def get_columns_without_number(self, number):
-        columns = []
-        for c in self.columns:
-            if not c.has_number(number):
-                columns.append(c)
-        return columns
+    def get_containers_without_number(self, num, list_of_containers):
+        containers = []
+        for c in list_of_containers:
+            if not c.has_number(num):
+                containers.append(c)
+        return containers
 
     def get_row(self, irow):
         return self.rows[irow]

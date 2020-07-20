@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-import collections
+from collections import defaultdict
 
 
 class CellContainer(ABC):
@@ -16,46 +16,59 @@ class CellContainer(ABC):
                 self.data[i].remove_available(number)
 
     def set_available(self, sudoku):
-        number_counter = collections.defaultdict(lambda: [])
+        number_counter = defaultdict(lambda: [])
         changed = False
         for i in range(len(self.data)):
             for available in self.data[i].available_numbers:
                 number_counter[available].append(i)
 
-        pairs = []
+        reverse_number_counter = defaultdict(lambda: set())
+        for available_number, lcells in number_counter.items():
+            key = tuple(sorted([self.data[icell] for icell in lcells]))
+            reverse_number_counter[key].add(available_number)
+
+        for available_cells, numbers in reverse_number_counter.items():
+            if len(available_cells) == len(numbers):
+                for number in numbers:
+                    self.remove_number([self.index(cell) for cell in available_cells], number)
+                for cell in available_cells:
+                    cell.available_numbers = list(numbers)
+                a = 10
+                b = a * 10
+
+        pairs = {}
         for available_number, lcells in number_counter.items():
             if len(lcells) == 1:
                 icell = lcells[0]
                 self.data[icell].set_value(available_number)
                 changed = True
-            elif len(lcells) == 2:
-                p1, p2 = tuple([self.data[icell] for icell in lcells])
-                pairs.append((p1, p2))
-
-                if p1.get_row() == p2.get_row():
-                    row = sudoku.get_row(p1.get_row())
-                    row.remove_number([p1.get_column(), p2.get_column()],
-                                      available_number)
-                if p1.get_column() == p2.get_column():
-                    column = sudoku.get_column(p1.get_column())
-                    column.remove_number([p1.get_row(), p2.get_row()],
-                                         available_number)
-            elif len(lcells) == 3:
-                pass
-
-        for i in range(len(pairs)):
-            for j in range(i + 1, len(pairs)):
-                p1 = pairs[i]
-                p2 = pairs[j]
-                if p1[0].available_numbers == p2[0].available_numbers and \
-                        p1[1].available_numbers == p2[1].available_numbers:
-                    s1 = set(p1[0].available_numbers)
-                    s2 = set(p1[1].available_numbers)
-                    excess_elements = s1.difference(s2)
-                    for elem in excess_elements:
-                        p1[0].remove_available(elem)
-                        p1[1].remove_available(elem)
+            else:
+                # if len(lcells) == 2:
+                #     pairs.append(tuple([self.data[icell] for icell in lcells]))
+                cells = [self.data[icell] for icell in lcells]
+                if all(cells[i].get_row() == cells[i + 1].get_row() for i in range(len(cells) - 1)):
+                    row = sudoku.get_row(cells[0].get_row())
+                    row.remove_number([c.get_column() for c in cells], available_number)
                     changed = True
+
+                if all(cells[i].get_column() == cells[i + 1].get_column() for i in range(len(cells) - 1)):
+                    column = sudoku.get_column(cells[0].get_column())
+                    column.remove_number([c.get_row() for c in cells], available_number)
+                    changed = True
+
+        # for i in range(len(pairs)):
+        #     for j in range(i + 1, len(pairs)):
+        #         p1 = pairs[i]
+        #         p2 = pairs[j]
+        #         if p1[0].available_numbers == p2[0].available_numbers and \
+        #                 p1[1].available_numbers == p2[1].available_numbers:
+        #             s1 = set(p1[0].available_numbers)
+        #             s2 = set(p1[1].available_numbers)
+        #             excess_elements = s1.difference(s2)
+        #             for elem in excess_elements:
+        #                 p1[0].remove_available(elem)
+        #                 p1[1].remove_available(elem)
+        #             changed = True
 
         return changed
 
@@ -90,6 +103,12 @@ class CellContainer(ABC):
     @abstractmethod
     def get_element(self, pos):
         pass
+
+    def index(self, obj):
+        for i in range(len(self.data)):
+            if self.data[i].position == obj.position:
+                return i
+        return -1
 
     def __next__(self):
         if self.i < 9:
@@ -152,7 +171,7 @@ class Square(CellContainer):
         return self.data[(pos[0] - self.ystart) * 3 + pos[1] - self.xstart]
 
     def __repr__(self):
-        return 'Q: ' + str(self.number)
+        return 'S: ' + str(self.number)
 
 
 class Row(CellContainer):

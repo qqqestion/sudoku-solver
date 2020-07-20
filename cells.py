@@ -16,9 +16,10 @@ class Cell:
     def get_square(self):
         return self.position[0] // 3 * 3 + self.position[1] // 3
 
+    @property
     def is_occupied(self):
         return self.value != ' '
-    
+
     def remove_available(self, num):
         try:
             self.available_numbers.remove(num)
@@ -33,6 +34,9 @@ class Cell:
         self.value = value
         if self.is_occupied:
             self.available_numbers = []
+
+    def full_compare(self, other):
+        return self.value == other.value and self.available_numbers == other.available_numbers
     
     def __eq__(self, other):
         if isinstance(other, Cell):
@@ -40,14 +44,8 @@ class Cell:
         else:
             return self.value == other
 
-    def __cmp__(self, other):
-        return self.position == other.position and self.available_numbers == self.available_numbers
-
     def __lt__(self, other):
-        if isinstance(other, Cell):
-            return self.value < other.value
-        else:
-            return self.value < other
+        return self.position < other.position
 
     def __str__(self):
         return self.value
@@ -56,5 +54,5 @@ class Cell:
         return self.value
 
     def __hash__(self):
-        return hash(self.value)
+        return hash(self.position)
 
