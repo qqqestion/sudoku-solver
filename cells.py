@@ -2,8 +2,8 @@ class Cell:
     def __init__(self, value, position):
         self.value = value
         self.position = position
-        if self.value == ' ':
-            self.available_numbers = [str(i) for i in range(1, 10)]
+        if self.value == 0:
+            self.available_numbers = [i for i in range(1, 10)]
         else:
             self.available_numbers = []
 
@@ -18,17 +18,19 @@ class Cell:
 
     @property
     def is_occupied(self):
-        return self.value != ' '
+        return self.value != 0
 
     def remove_available(self, num):
+        changed = False
         try:
             self.available_numbers.remove(num)
+            changed = True
         except ValueError:
             pass
         if len(self.available_numbers) == 1:
             self.set_value(self.available_numbers[0])
-            return True
-        return False
+            changed = True
+        return changed
 
     def set_value(self, value):
         self.value = value
@@ -37,7 +39,12 @@ class Cell:
 
     def full_compare(self, other):
         return self.value == other.value and self.available_numbers == other.available_numbers
-    
+
+    def copy(self):
+        new_cell = Cell(self.value, self.position)
+        new_cell.available_numbers = self.available_numbers.copy()
+        return new_cell
+
     def __eq__(self, other):
         if isinstance(other, Cell):
             return self.value == other.value
@@ -48,11 +55,12 @@ class Cell:
         return self.position < other.position
 
     def __str__(self):
-        return self.value
+        return str(self.value)
 
     def __repr__(self):
-        return self.value
+        return str(self.value)
 
     def __hash__(self):
         return hash(self.position)
+
 

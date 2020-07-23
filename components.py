@@ -33,42 +33,21 @@ class CellContainer(ABC):
                     self.remove_number([self.index(cell) for cell in available_cells], number)
                 for cell in available_cells:
                     cell.available_numbers = list(numbers)
-                a = 10
-                b = a * 10
 
-        pairs = {}
         for available_number, lcells in number_counter.items():
             if len(lcells) == 1:
                 icell = lcells[0]
                 self.data[icell].set_value(available_number)
                 changed = True
             else:
-                # if len(lcells) == 2:
-                #     pairs.append(tuple([self.data[icell] for icell in lcells]))
                 cells = [self.data[icell] for icell in lcells]
                 if all(cells[i].get_row() == cells[i + 1].get_row() for i in range(len(cells) - 1)):
                     row = sudoku.get_row(cells[0].get_row())
                     row.remove_number([c.get_column() for c in cells], available_number)
-                    changed = True
 
                 if all(cells[i].get_column() == cells[i + 1].get_column() for i in range(len(cells) - 1)):
                     column = sudoku.get_column(cells[0].get_column())
                     column.remove_number([c.get_row() for c in cells], available_number)
-                    changed = True
-
-        # for i in range(len(pairs)):
-        #     for j in range(i + 1, len(pairs)):
-        #         p1 = pairs[i]
-        #         p2 = pairs[j]
-        #         if p1[0].available_numbers == p2[0].available_numbers and \
-        #                 p1[1].available_numbers == p2[1].available_numbers:
-        #             s1 = set(p1[0].available_numbers)
-        #             s2 = set(p1[1].available_numbers)
-        #             excess_elements = s1.difference(s2)
-        #             for elem in excess_elements:
-        #                 p1[0].remove_available(elem)
-        #                 p1[1].remove_available(elem)
-        #             changed = True
 
         return changed
 
@@ -81,24 +60,20 @@ class CellContainer(ABC):
                 if cell.value == num:
                     positions.append(cell.position)
                 sudoku.update_all()
-            # if changed and cell.value == num:
-            #     positions.append(cell.position)
 
         changed |= self.set_available(sudoku)
 
         return changed
 
     def update_numbers(self):
-        changed = False
         for i in range(len(self.data)):
             update_cell = self.data[i]
             for j in range(len(self.data)):
                 iterate_cell = self.data[j]
                 result = update_cell.remove_available(iterate_cell.value)
                 if result:
-                    changed = True
-                    self.update_numbers()
-        return changed
+                    return True
+        return False
 
     @abstractmethod
     def get_element(self, pos):
